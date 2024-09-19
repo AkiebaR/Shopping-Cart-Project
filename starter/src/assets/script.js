@@ -1,79 +1,128 @@
-/* Create an array named products which you will use to add all of your product object literals that you create in the next step. */
+/**
+ * @description Represents the products/items available in the shop for purchase.
+ * Each item object contains a name, price, quantity, productId, and a image URL.
+ */
+const products = [
+  {
+      name: 'Carton of Cherries',
+      price: 4.00,
+      quantity: 0,
+      productId: 1,
+      image: './images/cherry.jpg'
+  },
+  {
+      name: 'Carton of Strawberries',
+      price: 5.00,
+      quantity: 0,
+      productId: 2,
+      image: './images/strawberry.jpg'
+  },
+  {
+      name: 'Bag of Oranges',
+      price: 10.00,
+      quantity: 0,
+      productId: 3,
+      image: './images/orange.jpg'
+  }
+];
 
-/* Create 3 or more product objects using object literal notation 
-   Each product should include five properties
-   - name: name of product (string)
-   - price: price of product (number)
-   - quantity: quantity in cart should start at zero (number)
-   - productId: unique id for the product (number)
-   - image: picture of product (url string)
+let cart = [];
+let totalPaid = 0; // Keeps track of the total amount paid by the cust.
+
+const findProductById = (productId, productList) => productList.find(product => product.productId === productId);
+
+/**
+* @description Adds a product to the cart or increases its quantity if it's already in the cart.
+* @param {number} productId - The unique ID # of the product.
 */
+function addProductToCart(productId) {
+  const product = findProductById(productId, products);
+  if (!product) {
+      alert(`Item with ID ${productId} not found.`);
+      return;
+  }
 
-/* Images provided in /images folder. All images from Unsplash.com
-   - cherry.jpg by Mae Mu
-   - orange.jpg by Mae Mu
-   - strawberry.jpg by Allec Gomes
-*/
-
-/* Declare an empty array named cart to hold the items in the cart */
-
-/* Create a function named addProductToCart that takes in the product productId as an argument
-  - addProductToCart should get the correct product based on the productId
-  - addProductToCart should then increase the product's quantity
-  - if the product is not already in the cart, add it to the cart
-*/
-
-/* Create a function named increaseQuantity that takes in the productId as an argument
-  - increaseQuantity should get the correct product based on the productId
-  - increaseQuantity should then increase the product's quantity
-*/
-
-/* Create a function named decreaseQuantity that takes in the productId as an argument
-  - decreaseQuantity should get the correct product based on the productId
-  - decreaseQuantity should decrease the quantity of the product
-  - if the function decreases the quantity to 0, the product is removed from the cart
-*/
-
-/* Create a function named removeProductFromCart that takes in the productId as an argument
-  - removeProductFromCart should get the correct product based on the productId
-  - removeProductFromCart should update the product quantity to 0
-  - removeProductFromCart should remove the product from the cart
-*/
-
-/* Create a function named cartTotal that has no parameters
-  - cartTotal should iterate through the cart to get the total cost of all products
-  - cartTotal should return the total cost of the products in the cart
-  Hint: price and quantity can be used to determine total cost
-*/
-
-/* Create a function called emptyCart that empties the products from the cart */
-
-/* Create a function named pay that takes in an amount as an argument
-  - amount is the money paid by customer
-  - pay will return a negative number if there is a remaining balance
-  - pay will return a positive number if money should be returned to customer
-  Hint: cartTotal function gives us cost of all the products in the cart  
-*/
-
-/* Place stand out suggestions here (stand out suggestions can be found at the bottom of the project rubric.)*/
-
-
-/* The following is for running unit tests. 
-   To fully complete this project, it is expected that all tests pass.
-   Run the following command in terminal to run tests
-   npm run test
-*/
-
-module.exports = {
-   products,
-   cart,
-   addProductToCart,
-   increaseQuantity,
-   decreaseQuantity,
-   removeProductFromCart,
-   cartTotal,
-   pay, 
-   emptyCart,
-   /* Uncomment the following line if completing the currency converter bonus */
-   // currency
+  const cartProduct = findProductById(productId, cart);
+  if (cartProduct) {
+      cartProduct.quantity++;
+  } else {
+      cart.push({ ...product, quantity: 1 });
+  }
+  renderCart();
 }
+
+/**
+* @description Removes a product from the cart completely.
+* @param {number} productId - The unique ID # of the product.
+*/
+function removeProductFromCart(productId) {
+  const cartItemIndex = cart.findIndex(item => item.productId === productId);
+  if (cartItemIndex > -1) {
+      cart.splice(cartItemIndex, 1);
+      renderCart();
+  } else {
+      alert(`Item selected with ID ${productId} not found in the cart.`);
+  }
+}
+
+/**
+* @description Calculates and returns the total cost of all products in the cart.
+* @returns {number} - The total cost of all products in the cart.
+*/
+function cartTotal() {
+  return cart.reduce((total, item) => total + item.price * item.quantity, 0);
+}
+
+/**
+* @description Handles payment,  and calculates remaining balance or change based on the total cost and the amount paid.
+* @param {number} amount - The amount of money the customer has paid.
+* @returns {number} - The difference between the amount paid and the total cost.
+*/
+function pay(amount) {
+  const totalCost = cartTotal();
+  if (amount < totalCost) {
+      alert('Insufficient funds for this transaction.');
+      return;
+  }
+  totalPaid += amount - totalCost;
+  return totalPaid;
+}
+
+/**
+* @description Updates the visual representation of the shopping cart in the UI.
+*/
+function renderCart() {
+  const cartContainer = document.querySelector('.cart');
+  cartContainer.innerHTML = cart.length === 0
+      ? "<p>Your cart is  currently empty</p>"
+      : cart.map(item => `
+          <div class="cart-item" data-productId="${item.productId}">
+              <h3>${item.name}</h3>
+              <p>Price: $${item.price}</p>
+              <p>Quantity: ${item.quantity}</p>
+              <p>Total: $${(item.price * item.quantity).toFixed(2)}</p>
+              <button onclick="increaseQuantity(${item.productId})">+</button>
+              <button onclick="decreaseQuantity(${item.productId})">-</button>
+              <button onclick="removeProductFromCart(${item.productId})">Remove</button>
+          </div>
+      `).join('');
+}
+
+// Set up the store (display products).
+const initializeStore = () => {
+  const productsContainer = document.querySelector('.products');
+  products.forEach(product => {
+      const productElement = document.createElement('div');
+      productElement.classList.add('product-item');
+      productElement.innerHTML = `
+          <h3>${product.name}</h3>
+          <img src="${product.image}" alt="${product.name}">
+          <p>Price: $${product.price}</p>
+          <button onclick="addProductToCart(${product.productId})">Add to Cart</button>
+      `;
+      productsContainer.appendChild(productElement);
+  });
+};
+
+// Calls initializeStore to set up the UI.
+initializeStore();
